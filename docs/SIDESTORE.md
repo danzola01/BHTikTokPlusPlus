@@ -69,3 +69,20 @@ Reuse the same base while compatible. Merge reviewed upstream changes into
 Signing refresh does not rebuild the app. Record run/source/output hashes and
 user results here. Commit and push app changes before updating the parent
 submodule revision.
+
+## Preparation validation
+
+Workflow YAML parsed and all shell blocks passed `bash -n`. The dispatcher
+rejects empty base inputs. Synthetic IPA checks accepted unencrypted metadata,
+rejected encrypted metadata, and removed an extension in `Extensions/`.
+Upstream included a FLEXing gitlink without a `.gitmodules` URL, causing the
+first run to fail at checkout:
+https://github.com/danzola01/BHTikTokPlusPlus/actions/runs/43695168933
+The unused gitlink was removed (the Makefile does not build it).
+Compile-only retry:
+https://github.com/danzola01/BHTikTokPlusPlus/actions/runs/43695215948
+Source: `567bb98`. Hosted arm64 compilation succeeded; the compiled tweak
+was downloaded to `output/BHTikTok.dylib` (ignored by Git).
+SHA-256: `cee22303c94440be7467e712d0a149a772ae15ad6807ab1b5d9d9f75b2c32b7b`.
+IPA packaging and phone behavior remain unverified.
+User has a base IPA on their iPhone; transfer and inspection are pending.
