@@ -120,8 +120,8 @@ then ad removal, normal downloads and SideStore refresh. Report device results.
 ## First device login failure
 
 User reports being unable to log in, receiving “maximum number of attempts
-exceeded” (wording paraphrased from their message). The exact login method,
-whether it happened on the first attempt, and Safari login result are pending.
+exceeded” (wording paraphrased from their message). User tried email, username and Google login. Whether it happened on the first
+attempt and the Safari login result remain pending.
 Do not label this an account lockout or claim a tweak fix without a comparison.
 
 A historical upstream report describes the same message on the first attempt:
