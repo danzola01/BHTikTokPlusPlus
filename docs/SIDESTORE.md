@@ -14,7 +14,8 @@ before uninstalling the App Store version. Expect a new login.
 Supplied base: TikTok 47.7.0 (477034), minimum iOS 15.0. Upstream does
 not document a supported base version. Compilation, packaging, and phone behavior
 are separate checks; successful compilation does not establish compatibility.
-No installable IPA has been produced. Login persistence must be checked early.
+The first installable IPA was produced and verified below. Phone compatibility
+and login persistence remain unverified.
 
 ## Build
 
@@ -84,9 +85,33 @@ https://github.com/danzola01/BHTikTokPlusPlus/actions/runs/43695215948
 Source: `567bb98`. Hosted arm64 compilation succeeded; the compiled tweak
 was downloaded to `output/BHTikTok.dylib` (ignored by Git).
 SHA-256: `cee22303c94440be7467e712d0a149a772ae15ad6807ab1b5d9d9f75b2c32b7b`.
-IPA packaging and phone behavior remain unverified.
+Compile-only preparation did not establish IPA packaging or phone behavior.
 Base transferred and inspected: archive CRC passed; all 26 detected Mach-O
 files report cryptid 0, with no dylibs or provisioning profiles detected.
 Size: 541,238,484 bytes. SHA-256:
 `9d5d946248145f884c021c78c1826e089834a14ca5cefba9b2d038338894b5b1`.
 Base draft tag: `base-tiktok-47.7.0`. This is a compatibility trial.
+
+## First packaged build
+
+Build succeeded: https://github.com/danzola01/BHTikTokPlusPlus/actions/runs/43696120540
+Source: `08d37b4228219f821ad2c6b5604a4109985a00db`.
+Remote base size/digest match the inspected file; base remains a draft.
+Output draft tag: `tiktok-ipa43696120540-1`.
+Owner-only page: https://github.com/danzola01/BHTikTokPlusPlus/releases/tag/untagged-ea823ddc646dcf39d54f
+Asset: `TikTok.ipa`, 504,947,959 bytes. SHA-256:
+`77894fb7c59cb6e1833fd8516a4386e9805c326983b028ad29e454163979386d`.
+Local copy: `output/first-build/TikTok.ipa`.
+
+Hosted compilation/packaging passed. Downloaded IPA hash, archive integrity,
+unencrypted metadata, original identity, and absence of embedded extensions
+passed local verification. Main executable loads `@rpath/BHTikTok.dylib`;
+its CydiaSubstrate framework dependency is bundled. Inspection reports and
+load commands are saved under ignored `output/first-build/`.
+Output release remains unpublished. No device install or functional test has run.
+
+On iPhone, sign into GitHub as the owner, open the draft page, and download
+`TikTok.ipa` from Assets. Save App Store TikTok drafts before removing that app.
+Install the IPA through SideStore → My Apps → + using the existing signing
+account/VPN setup. Test launch, login and two force-quit/reopen cycles first,
+then ad removal, normal downloads and SideStore refresh. Report device results.
