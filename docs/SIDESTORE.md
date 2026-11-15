@@ -11,7 +11,7 @@ before uninstalling the App Store version. Expect a new login.
 
 ## Status
 
-No decrypted TikTok base IPA is available in this workspace yet. Upstream does
+Supplied base: TikTok 47.7.0 (477034), minimum iOS 15.0. Upstream does
 not document a supported base version. Compilation, packaging, and phone behavior
 are separate checks; successful compilation does not establish compatibility.
 No installable IPA has been produced. Login persistence must be checked early.
@@ -85,4 +85,8 @@ Source: `567bb98`. Hosted arm64 compilation succeeded; the compiled tweak
 was downloaded to `output/BHTikTok.dylib` (ignored by Git).
 SHA-256: `cee22303c94440be7467e712d0a149a772ae15ad6807ab1b5d9d9f75b2c32b7b`.
 IPA packaging and phone behavior remain unverified.
-User has a base IPA on their iPhone; transfer and inspection are pending.
+Base transferred and inspected: archive CRC passed; all 26 detected Mach-O
+files report cryptid 0, with no dylibs or provisioning profiles detected.
+Size: 541,238,484 bytes. SHA-256:
+`9d5d946248145f884c021c78c1826e089834a14ca5cefba9b2d038338894b5b1`.
+Base draft tag: `base-tiktok-47.7.0`. This is a compatibility trial.
