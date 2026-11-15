@@ -164,3 +164,19 @@ strings alone do not establish that the hook runs or fixes authentication.
 The trial does not hook NSBundle, change entitlements, alter region/channel
 methods, or change the base IPA. Other upstream runtime behavior is preserved.
 A hosted compile/package check validates the build, not login success.
+
+Trial build succeeded:
+https://github.com/danzola01/BHTikTokPlusPlus/actions/runs/43700956804
+Source: `954d3b58b521df97783cebbd2d68ec7d34f1941c`.
+Unpublished draft: `tiktok-ipa43700956804-1`.
+Owner page: https://github.com/danzola01/BHTikTokPlusPlus/releases/tag/untagged-7f1fcbeb55f43f4fde10
+Asset: `TikTok.ipa`, 504,948,232 bytes. SHA-256:
+`703f1674e481ed1724a121c8242ff99ee0be0356a1525211a70428fbde9a0570`.
+Hosted compilation and IPA checks passed. Downloaded hash/identity/unencrypted
+metadata, extension removal, main load command and bundled hooking framework
+passed local verification. Compiled tweak contains trial class/selector/identity
+strings; this does not prove hook execution. Local copy:
+`output/login-identity-trial/TikTok.ipa`. Device outcome pending.
+Install over the existing modified app with the same SideStore account; make
+one login attempt, then report success or the exact error. On success, verify
+two force-quit/reopen cycles before feature tests. No fix is confirmed yet.
