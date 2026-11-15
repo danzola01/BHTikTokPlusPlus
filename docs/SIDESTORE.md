@@ -135,3 +135,32 @@ Packaging checks cannot assert this symptom. Next evidence requested: login
 method, first-attempt behavior, and whether the same account can log in via
 Safari. Avoid repeated app login attempts while gathering the comparison.
 No runtime hooks have been changed and no replacement build is claimed to fix it.
+
+## Login identity trial
+
+User confirms Safari login succeeds for the same account, while email, username
+and Google login fail in the installed build. This is the phone comparison used
+for the next trial; it is not proof of an identity mismatch. No automated Linux
+test can reproduce the signed iPhone/server authentication flow. The acceptance
+signal remains one login attempt on the updated phone build followed, if login
+succeeds, by two force-quit/reopen cycles. Do not repeatedly retry a failing login.
+
+Ranked candidates: (1) identity changed by signing, (2) another signing-related
+login incompatibility, (3) interference from an existing tweak hook.
+
+Primary reference for TikTok's internal identity seam:
+https://github.com/378804441/DWTikTokHook/blob/master/TiktokHookTheos/Tweak.x
+Its README describes login repair using `TTInstallSandBoxHelper.bundleIdentifier`.
+This is historical evidence, not a current-version compatibility guarantee.
+SideStore's current `ResignAppOperation.swift` assigns the provisioning profile's
+bundle ID during signing, so retaining identity in the input IPA alone cannot
+establish the identity observed by the installed app.
+
+The supplied 47.7.0 MusicallyCore binary contains the helper class name and the
+bundleIdentifier selector. `LoginIdentity.xm` adds one guarded class-method hook
+returning TikTok's original identity. It only initializes if the existing method
+has zero explicit arguments and an Objective-C object return type. Class/selector
+strings alone do not establish that the hook runs or fixes authentication.
+The trial does not hook NSBundle, change entitlements, alter region/channel
+methods, or change the base IPA. Other upstream runtime behavior is preserved.
+A hosted compile/package check validates the build, not login success.
