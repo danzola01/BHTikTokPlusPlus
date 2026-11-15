@@ -2,3 +2,15 @@
 .vscode/
 packages/
 .DS_Store
+
+# Personal build artifacts and secrets
+*.ipa
+*.deb
+*.mobileprovision
+*.p12
+*.p8
+.env
+.env.*
+.secrets/
+output/
+__pycache__/

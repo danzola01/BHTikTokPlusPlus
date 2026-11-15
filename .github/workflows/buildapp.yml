@@ -1,0 +1,153 @@
+# Inspired heavily by the following workflows
+# https://github.com/arichornlover/uYouEnhanced/blob/main/.github/workflows/buildapp.yml
+# https://github.com/ISnackable/YTCubePlus/blob/main/.github/workflows/Build.yml
+# https://github.com/BandarHL/BHTwitter/actions/workflows/build.yml
+
+name: Build and Package BHTikTokPlusPlus
+
+on:
+    workflow_dispatch:
+        inputs:
+            ipa_release:
+                description: "Unpublished draft release tag containing exactly one base IPA"
+                required: false
+                type: string
+            ipa_sha256:
+                description: "Expected SHA-256 of the inspected base IPA"
+                required: false
+                type: string
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+jobs:
+    build:
+        name: Build BHTikTokPlusPlus
+        if: github.repository == 'danzola01/BHTikTokPlusPlus' && github.ref == 'refs/heads/sidestore'
+        runs-on: macos-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout Main
+              uses: actions/checkout@v4
+              with:
+                path: main
+                submodules: recursive
+
+            - name: Retrieve and validate base IPA
+              if: inputs.ipa_release != ''
+              env:
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GH_REPO: ${{ github.repository }}
+                IPA_RELEASE: ${{ inputs.ipa_release }}
+                EXPECTED_SHA256: ${{ inputs.ipa_sha256 }}
+              run: |
+                set -euo pipefail
+                [[ "$EXPECTED_SHA256" =~ ^[a-fA-F0-9]{64}$ ]] || { echo "Invalid SHA-256"; exit 1; }
+                [[ "$IPA_RELEASE" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { echo "Invalid base release tag"; exit 1; }
+                test "$(gh release view "$IPA_RELEASE" --json isDraft --jq '.isDraft')" = true
+                count=$(gh release view "$IPA_RELEASE" --json assets --jq '[.assets[] | select(.name | endswith(".ipa"))] | length')
+                test "$count" = 1
+                mkdir -p main/packages main/output
+                gh release download "$IPA_RELEASE" --pattern '*.ipa' --output main/packages/com.zhiliaoapp.musically.ipa
+                python3 main/scripts/inspect_ipa.py main/packages/com.zhiliaoapp.musically.ipa --require-decrypted --sha256 "$EXPECTED_SHA256" --output main/output/base-ipa.json
+                python3 - <<'PYTHON'
+                import json
+                from pathlib import Path
+                report = json.loads(Path('main/output/base-ipa.json').read_text())
+                if report['bundle_id'] != 'com.zhiliaoapp.musically':
+                    raise SystemExit('Expected a base TikTok IPA')
+                PYTHON
+
+            - name: Install Dependencies
+              run: brew install ldid dpkg make cmake
+
+            - name: Set PATH environment variable
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH 
+
+            - name: Setup Theos
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: 8167f59de02fd32cf45b16bfcb1330dfa5c9974c
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+
+            # Match the working Logos pin used by the existing SideStore builds.
+            - name: Pin Logos to known-good version
+              run: |
+                cd "$THEOS/vendor/logos"
+                git fetch --depth=1 origin a62370066a97e36d59b200a9fa10c5091f5e8972
+                git checkout a62370066a97e36d59b200a9fa10c5091f5e8972
+              env:
+                THEOS: ${{ github.workspace }}/theos
+        
+            - name: SDK Caching
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.5.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.5.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Compile tweak
+              env:
+                THEOS: ${{ github.workspace }}/theos
+              run: |
+                set -euo pipefail
+                cd main
+                make FINALPACKAGE=1 ARCHS=arm64
+                mkdir -p output
+                cp .theos/obj/BHTikTok.dylib output/BHTikTok.dylib
+
+            - name: Save compiled tweak (no proprietary app)
+              uses: actions/upload-artifact@v4
+              with:
+                name: BHTikTok-dylib
+                path: main/output/BHTikTok.dylib
+
+            - name: Package IPA
+              if: inputs.ipa_release != ''
+              run: |
+                set -euo pipefail
+                pipx install https://github.com/asdfzxcvbn/pyzule-rw/archive/740d3716dcd98c20c000f12cdb88f1f0b2a533a4.zip
+                cd main
+                cyan -i packages/com.zhiliaoapp.musically.ipa -o output/injected.ipa -f output/BHTikTok.dylib -c 9 -du
+                python3 scripts/strip_extensions.py output/injected.ipa output/TikTok.ipa
+                python3 scripts/strip_extensions.py --check output/TikTok.ipa
+                python3 scripts/inspect_ipa.py output/TikTok.ipa --require-decrypted --output output/built-ipa.json
+                python3 - <<'PYTHON'
+                import json
+                from pathlib import Path
+                report = json.loads(Path('output/built-ipa.json').read_text())
+                if report['bundle_id'] != 'com.zhiliaoapp.musically':
+                    raise SystemExit('Unexpected output app identity')
+                if 'BHTikTok.dylib' not in {Path(n).name for n in report['dylibs']}:
+                    raise SystemExit('Missing injected tweak')
+                PYTHON
+
+            - name: Create unpublished output release
+              if: inputs.ipa_release != ''
+              env:
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GH_REPO: ${{ github.repository }}
+                OUTPUT_TAG: tiktok-ipa${{ github.run_id }}-${{ github.run_attempt }}
+              run: |
+                set -euo pipefail
+                gh release create "$OUTPUT_TAG" main/output/TikTok.ipa main/output/base-ipa.json main/output/built-ipa.json --draft --target "$GITHUB_SHA" --title "Personal BHTikTokPlusPlus build $GITHUB_RUN_ID" --notes "Personal SideStore build. Keep this release unpublished."
+                test "$(gh release view "$OUTPUT_TAG" --json isDraft --jq '.isDraft')" = true
+                echo "Output is in unpublished draft release: $OUTPUT_TAG" >> "$GITHUB_STEP_SUMMARY"
