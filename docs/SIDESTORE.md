@@ -108,10 +108,30 @@ unencrypted metadata, original identity, and absence of embedded extensions
 passed local verification. Main executable loads `@rpath/BHTikTok.dylib`;
 its CydiaSubstrate framework dependency is bundled. Inspection reports and
 load commands are saved under ignored `output/first-build/`.
-Output release remains unpublished. No device install or functional test has run.
+Output release remains unpublished. User subsequently installed the app and
+reported login failure as recorded below; successful login is not verified.
 
 On iPhone, sign into GitHub as the owner, open the draft page, and download
 `TikTok.ipa` from Assets. Save App Store TikTok drafts before removing that app.
 Install the IPA through SideStore → My Apps → + using the existing signing
 account/VPN setup. Test launch, login and two force-quit/reopen cycles first,
 then ad removal, normal downloads and SideStore refresh. Report device results.
+
+## First device login failure
+
+User reports being unable to log in, receiving “maximum number of attempts
+exceeded” (wording paraphrased from their message). The exact login method,
+whether it happened on the first attempt, and Safari login result are pending.
+Do not label this an account lockout or claim a tweak fix without a comparison.
+
+A historical upstream report describes the same message on the first attempt:
+https://github.com/BandarHL/BHTikTok/issues/4
+A maintainer attributed that old case to changed bundle IDs. Our packaged IPA
+retains the original ID; the identity after SideStore signing is not established.
+That old report does not prove the cause on TikTok 47.7.0.
+
+The signed iPhone/server login flow cannot be reproduced in this Linux checkout.
+Packaging checks cannot assert this symptom. Next evidence requested: login
+method, first-attempt behavior, and whether the same account can log in via
+Safari. Avoid repeated app login attempts while gathering the comparison.
+No runtime hooks have been changed and no replacement build is claimed to fix it.
